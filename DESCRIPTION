@@ -1,0 +1,10 @@
+Package: mitology
+Type: Package
+Title: study of mitochondrial activities from high-throughput data
+Version: 0.1.0
+Author: Stefania Pirrotta <s.pirrotta.sp at gmail.com>, Enrica Calura <enrica.calura at unipd.it>
+Maintainer: Stefania Pirrotta <s.pirrotta.sp at gmail.com>
+Description: study of mitochondrial activities from high-throughput data
+License:  AGPL-3
+Encoding: UTF-8
+LazyData: true
