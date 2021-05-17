@@ -16,13 +16,10 @@
 
 #' say hello to the user
 #'
-#' @param
-#'
-#' @return
-#' @export
-#'
+#' @param saySome a string.
+#' @return The string
 #' @examples
 #' hello()
-hello <- function() {
-  print("Hello, world!")
+hello <- function(saySome) {
+  print(saySome)
 }
