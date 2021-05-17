@@ -18,8 +18,9 @@
 #'
 #' @param saySome a string.
 #' @return The string
+#' @export
 #' @examples
 #' hello()
-hello <- function(saySome) {
+hello <- function(saySome="Hello") {
   print(saySome)
 }
