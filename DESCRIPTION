@@ -13,6 +13,7 @@ Author: Stefania Pirrotta [aut, cre],
 Maintainer: Stefania Pirrotta <s.pirrotta.sp@gmail.com>
 Description: A toolkit to study the mitochondrial activities from high-throughput data.
 License: AGPL-3
+Imports: GSVA, SummarizedExperiment, ape, ggplot2, ggtree, scales
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
