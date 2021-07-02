@@ -47,21 +47,24 @@ DBdend <- function(database){
 #'
 #' @param dataset Gene expression data which can be given either as a SummarizedExperiment or ExpressionSet object, or as a matrix of expression values where rows correspond to genes and columns correspond to samples.
 #' @param database One of MitoCarta, Reactome, GO-CC and GO-BP. Default is MitoCarta.
+#' @param method Method to employ in the estimation of gene-set enrichment scores per sample as in GSVA package. By default this is set to ssgsea.
 #'
 #' @return NULL
 #'
 #' @importFrom GSVA gsva
 #'
 #' @export
-mitoAnalysisLeaves <- function(dataset = NULL, database = "MitoCarta"){
+mitoAnalysisLeaves <- function(dataset = NULL, database = "MitoCarta", method = "ssgsea"){
 
   if(is.null(dataset)){stop("You must provide a dataset to perform the analysis")}
   if(!(database %in% c("MitoCarta", "Reactome", "GO-CC", "GO-BP"))){
     stop("Database have to be MitoCarta, Reactome, GO-CC or GO-BP")}
+  if(!(method %in% c("gsva", "ssgsea", "zscore", "plage"))){
+    stop("Method have to be gsva, ssgsea, zscore or plage")}
 
   geneset <- DBgeneset(database = database)
   results <- suppressWarnings(gsva(expr = dataset, gset.idx.list = geneset,
-                                   method = "ssgsea", kcdf = "Poisson", mx.diff = F,
+                                   method = method, kcdf = "Poisson", mx.diff = F,
                                    verbose = T, ssgsea.norm = T))
   return(results)}
 
