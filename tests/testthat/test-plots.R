@@ -1,12 +1,12 @@
 library(mitology)
 library(testthat)
 
-test_that("mitoPlotLeaves work", {
+test_that("mitoTreeHeatmap work", {
     n <- length(names(MCgs)) * 5
     rmatrix <- matrix(rnorm(n, 0), ncol = 5)
     rownames(rmatrix) <- names(MCgs)
     colnames(rmatrix) <- paste0("Sample_", seq_len(5))
-    pres <- mitoPlotLeaves(leafResults = rmatrix, database = "MitoCarta")
+    pres <- mitoTreeHeatmap(data = rmatrix, database = "MitoCarta")
     expect_true(is(pres, "ggtree"))
     expect_true(is(pres, "gg"))
     expect_true(is(pres, "ggplot"))

@@ -51,21 +51,22 @@ getGeneSets <- function(
 }
 
 
-#' Circular heatmap of mitochondrial gene set scores.
+#' Circular heatmap on mitochondrial gene set tree.
 #'
-#' @description Given the enrichment output, it returns a circular heatmap of 
-#' the ssGSEA scores for each specific mitochondrial gene set (leaf of the 
-#' database tree) or gene set group (section of the database tree).
+#' @description Given a matrix of scores, it returns a circular heatmap of
+#' the mitochondrial gene sets (leaf of the database tree) or gene set 
+#' groups (section of the database tree).
 #'
-#' @param leafResults output of the enrichment.
+#' @param data matrix or data.frame with samples in columns and mitochondrial 
+#' gene sets in rows.
 #' @param database character string saying the database used for the analysis.
 #' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
 #' @param sections logical. Either to keep the aggregated gene set categories 
 #' or the specific gene sets. Default is FALSE.
 #' @param samples character vector with the names of samples to be plotted.
 #' Otherwise all samples are plotted.
-#' @param labelNames character string that says to plot the names of "sections"
-#' or "leaves".
+#' @param labelNames character string that says to plot either the names of 
+#' "sections" or "leaves".
 #' @param ... other arguments passed on to the \code{\link[ggtree]{gheatmap}}
 #' function.
 #'
@@ -80,10 +81,15 @@ getGeneSets <- function(
 #'
 #' @examples
 #' MClist <- getGeneSets()
+#' n <- length(names(MClist)) * 5
+#' rmatrix <- matrix(rnorm(n, 0), ncol = 5)
+#' rownames(rmatrix) <- names(MClist)
+#' colnames(rmatrix) <- paste0("Sample_", seq_len(5))
+#' mitoTreeHeatmap(data = rmatrix, database = "MitoCarta")
 #'
 #' @export
-mitoPlotLeaves <- function(
-        leafResults, database = "MitoCarta", sections = FALSE, 
+mitoTreeHeatmap <- function(
+        data, database = "MitoCarta", sections = FALSE, 
         samples = NULL, labelNames = "sections", ...){
 
     if(!(database %in% c("MitoCarta", "Reactome", "GO-CC", "GO-BP"))){
@@ -95,31 +101,31 @@ mitoPlotLeaves <- function(
     dbdend <- ggtree(
         tr = dbtree, layout = "fan", open.angle = 25, color = "gray60")
 
-    # if(!all(rownames(leafResults) %in% dbtree$tip.label)){stop(
+    # if(!all(rownames(data) %in% dbtree$tip.label)){stop(
     #     "Database does not correspond with the results")}
-    if(is.null(samples)){samples <- colnames(leafResults)
+    if(is.null(samples)){samples <- colnames(data)
     } else if(length(samples)<2){stop("Samples must be at least 2")
-    } else if(!(all(samples %in% colnames(leafResults)))){
-        stop("All samples must be included in leafResults")}
+    } else if(!(all(samples %in% colnames(data)))){
+        stop("All samples must be included in data")}
 
-    resultsScore <- leafResults[,colnames(leafResults) %in% samples]
+    data <- data[,colnames(data) %in% samples]
 
     CatNodes <- dbtree$edge[,2][dbtree$edge[,1]==length(dbtree$tip.label)+1]
     
     if(sections){
-        resultsScore <- do.call(rbind, lapply(seq_along(CatNodes), function(x){
+        data <- do.call(rbind, lapply(seq_along(CatNodes), function(x){
             clade <- extract.clade(dbtree, node = CatNodes[x])
-            resultsScore[rep(x, length(clade$tip.label)),]}))
-        rownames(resultsScore) <- dbtree$tip.label }
+            data[rep(x, length(clade$tip.label)),]}))
+        rownames(data) <- dbtree$tip.label }
     
     plotPar <- .plotParams(database = database)
 
     dots <- list(...)
     args <- .matchArguments(dots, list(
-        p = dbdend, data = resultsScore, colnames = TRUE, 
+        p = dbdend, data = data, colnames = TRUE, 
         colnames_angle = 30, colnames_position = "top", hjust = 0, offset = 0))
     g <- do.call(gheatmap, args)
-    maxScore <- max(abs(resultsScore))
+    maxScore <- max(abs(data))
     g <- g + scale_fill_gradientn(
         colours = c("#701d46","#CB347F", "white", plotPar$DBcol),
         name = "ssGSEA\nScore",
@@ -129,15 +135,15 @@ mitoPlotLeaves <- function(
         theme(legend.position = "bottom")
 
     dbwidth <- (
-        dbdend$data$x %>% range(na.rm=TRUE) %>% diff) / ncol(resultsScore)
+        dbdend$data$x %>% range(na.rm=TRUE) %>% diff) / ncol(data)
 
     if(labelNames == "leaves" & !sections){
-        g <- g + geom_tiplab(offset = dbwidth*(ncol(resultsScore)+1))
+        g <- g + geom_tiplab(offset = dbwidth*(ncol(data)+1))
     } else {
         CatNames <- dbtree$node.label[CatNodes-Ntip(dbtree)]
         g <- g + geom_cladelab(
             node = CatNodes, label = CatNames, barsize = 2, 
-            offset.text = dbwidth*2, offset = dbwidth*(ncol(resultsScore)+1), 
+            offset.text = dbwidth*2, offset = dbwidth*(ncol(data)+1), 
             barcolour = plotPar$DBcol[1], angle = "auto", horizontal = TRUE) +
             theme(legend.key.size = unit(5, "mm")) }
 

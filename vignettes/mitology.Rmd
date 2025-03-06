@@ -103,14 +103,14 @@ ovse
 ```
 
 ### Enrichment analyses of the mitochondrial gene sets
-Over representation analysis
+We can perform an over representation analysis with `clusterProfiler`.
 
 ```{r}
 genes <- rownames(ovse)[elementMetadata(ovse)$PROvsIMR_FDR < 0.001]
-result <- enricher(gene = genes, TERM2GENE = MC_df)
+res_ora <- enricher(gene = genes, TERM2GENE = MC_df)
 ```
 
-Single sample gene set enrichment analysis (ssGSEA)
+Or also a single sample gene set enrichment analysis (ssGSEA) with `GSVA`.
 
 ```{r}
 gsvaPar <- ssgseaParam(exprData = ovse, geneSets = MC_list)
@@ -118,24 +118,38 @@ res_ssGSEA <- gsva(gsvaPar)
 ```
 
 ## Visualization
+When we obtain a matrix of scores for each sample in each gene set we can visualize it by plotting a circular heatmap on the gene set tree hierarchy.
+
+```{r, message=FALSE}
+res_scale_ssGSEA <- t(scale(t(assay(res_ssGSEA))))
+mitoTreeHeatmap(
+    data = res_scale_ssGSEA, database = "MitoCarta", 
+    labelNames = "leaves", font.size = 1)
+```
+
+We can summarize the information of samples by taking the mean value for each OV subtype.
+
 ```{r}
 res_ssGSEA_subtype <- do.call(
     cbind, lapply(unique(ovse$OV_subtype), function(x){
-        rowMedians(assay(res_ssGSEA)[,ovse$OV_subtype==x])
+        rowMeans(assay(res_ssGSEA)[,ovse$OV_subtype==x])
     }))
 colnames(res_ssGSEA_subtype) <- unique(ovse$OV_subtype)
 rownames(res_ssGSEA_subtype) <- rownames(res_ssGSEA)
 res_ssGSEA_subtype <- t(scale(t(res_ssGSEA_subtype)))
 ```
 
+```{r, message=FALSE}
+mitoTreeHeatmap(
+    data = res_ssGSEA_subtype, database = "MitoCarta", 
+    labelNames = "leaves", font.size = 1)
+```
+
+It is possible to plot only the main section arguments instead of the single gene set names.
 
 ```{r, message=FALSE}
-mitoPlotLeaves(
-    leafResults = res_ssGSEA_subtype, database = "MitoCarta", 
-    labelNames = "leaves", font.size = 1)
-
-mitoPlotLeaves(
-    leafResults = res_ssGSEA_subtype, database = "MitoCarta",
+mitoTreeHeatmap(
+    data = res_ssGSEA_subtype, database = "MitoCarta",
     labelNames = "sections", font.size = 3)
 ```
 
