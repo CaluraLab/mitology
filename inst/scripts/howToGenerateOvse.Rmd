@@ -1,0 +1,107 @@
+---
+title: "How we generate ovse object"
+author: "Stefania Pirrotta"
+date: '2025-01-28'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+In this workflow, we present all the steps, along with the code, to generate the `ovse` object: from sample collection and filtering to log fold change computation.
+
+# Method
+## Sample Collection
+RNA sequencing Ovarian Cancer (OVC) data are retrieved from The Cancer Genome Atlas (TCGA) database using `curatedTCGAData` package. It returns a `MultiAssayExperiment`, from which we extract a `SummarizedExperiment.` Data are then normalized with the `betweenLaneNormalization` function.
+
+```{r}
+library(curatedTCGAData)
+library(MultiAssayExperiment)
+library(signifinder)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+library(edgeR)
+
+## Download data from TCGA
+OVmae <- curatedTCGAData(diseaseCode = "OV", assays = "RNASeqGene", 
+                         version = "2.0.1", dry.run = FALSE)
+OVcolData <- colData(OVmae)
+OVse <- OVmae[[1]]
+colnames(OVse) <- substr(colnames(OVse), 1, 12)
+OVse <- OVse[,!duplicated(colnames(OVse))]
+
+## Normalize counts
+assay(OVse) <- EDASeq::betweenLaneNormalization(as.matrix(assay(OVse)), 
+                                                which = "median")
+names(OVse@assays@data@listData)[1] <- "norm_expr"
+```
+
+Then, we compute the scores for the ovarian subgroups using the `consensusOVSign` function from `signifinder`, and we assign to each sample the subgroup with the highest score, following the procedure suggested by Chen et al, 2018, Clinical Cancer Research.
+```{r}
+## Compute consensusOV
+OVse <- consensusOVSign(OVse)
+
+cons_names <- c("ConsensusOV_Chen_IMR", "ConsensusOV_Chen_DIF", 
+                "ConsensusOV_Chen_PRO", "ConsensusOV_Chen_MES")
+OV_subtype <- sapply(1:296, function(x){
+    names(which.max(as.vector(as.data.frame(colData(OVse))[x, cons_names])))})
+OV_subtype <- substring(OV_subtype, 18)
+names(OV_subtype) <- colnames(OVse)
+```
+
+## Sample and Gene Filtering
+We select the 10 samples with the highest scores for each subgroup and filter out all the other samples.
+```{r}
+## Select few samples with the highest scores
+selected_names <- c()
+for(i in c("IMR", "DIF", "PRO", "MES")){
+    sub_ov <- colData(OVse)[,paste0("ConsensusOV_Chen_", i)][OV_subtype==i]
+    names(sub_ov) <- names(OV_subtype[OV_subtype==i])
+    selected_names <- c(selected_names, 
+                        names(sort(sub_ov, decreasing = T)[1:10]))
+}
+ovse <- OVse[, selected_names]
+OV_subtype <- OV_subtype[selected_names]
+```
+
+To speed up the computation of the enrichment analyses, we keep only the genes included in the mitochondrial gene list and filter out all the other genes.
+```{r}
+## Select genes included in the signatures
+genes_to_keep <- unlist(mapIds(
+  x = org.Hs.eg.db, keys = MitoGenes, 
+  column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first"))
+genes_to_keep <- unique(genes_to_keep)
+
+## Filter genes
+ovse <- ovse[rownames(ovse) %in% genes_to_keep,]
+```
+
+## Log fold change computation
+We compute the log fold change of the IMR versus the PRO samples.
+```{r}
+dge <- DGEList(assay(ovse, i = 1))
+dge <- calcNormFactors(dge, method = "RLE")
+data_norm <- t(t(assay(ovse, i = 1))*dge$samples$norm.factors)
+design <- model.matrix(~ 0+OV_subtype, data = colData(ovse))
+dge <- estimateDisp(dge, design)
+fit <- glmFit(dge, design)
+res <- glmLRT(fit, contrast = c(0,-1,0,1))
+PROvsIMR <- topTags(res, n=Inf)$table
+```
+
+We can now add these data inside the `ovse` object.
+```{r}
+## Add information to ovse
+colData(ovse) <- colData(ovse)[,-c(1,2,3,4)]
+ovse$OV_subtype <- OV_subtype
+rowData(ovse) <- cbind(rowData(ovse), PROvsIMR_logFC = PROvsIMR$logFC)
+rowData(ovse) <- cbind(rowData(ovse), PROvsIMR_FDR = PROvsIMR$FDR)
+
+## Change sample names
+colnames(ovse) <- paste0("sample", 1:40)
+
+ovse
+```
+
+And this is the `ovse` object inside mitology/data.

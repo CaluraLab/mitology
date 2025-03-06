@@ -1,24 +1,30 @@
 Package: mitology
 Type: Package
-Title: study of mitochondrial activities from high-throughput data
-Version: 0.1.0
-Authors@R: c(   person("Stefania", "Pirrotta",
-                        role=c("cre", "aut"),
-                        email="s.pirrotta.sp@gmail.com"),
-                person("Enrica", "Calura",
-                        role="aut",
-                        email="enrica.calura@unipd.it"))
-Author: Stefania Pirrotta [aut, cre], 
-        Enrica Calura [aut]
-Maintainer: Stefania Pirrotta <s.pirrotta.sp@gmail.com>
-Description: A toolkit to study the mitochondrial activities from high-throughput data.
+Title: Study of mitochondrial activity from RNA-seq data
+Version: 0.99.0
+Authors@R: c(person("Stefania", "Pirrotta", role = c("cre", "aut"),
+                    email = "stefania.pirrotta@unipd.it",
+                    comment = c(ORCID = "0009-0004-0030-217X")),
+             person("Enrica", "Calura", role = "aut", 
+                    email = "enrica.calura@unipd.it",
+                    comment = c(ORCID = "0000-0001-8463-2432")))
+Description: mitology allows to study the mitochondrial activity throught
+        high-throughput RNA-seq data. It is based on a collection of genes whose
+        proteins localize in to the mitochondria. From these, mitology provides 
+        a reorganization of the pathways related to mitochondria activity from 
+        Reactome and Gene Ontology. Further a ready-to-use implementation of 
+        MitoCarta3.0 pathways is included.
 License: AGPL-3
-Imports: GSVA, SummarizedExperiment, ape, ggplot2, ggtree, scales
+biocViews: GeneExpression, RNASeq, Visualization, SingleCell, 
+        Spatial, Pathways, Reactome, GO
+Imports: AnnotationDbi, ape, ggplot2, ggtree, magrittr, 
+        org.Hs.eg.db, scales, stats, SummarizedExperiment
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.1.1
-Depends: R (>= 3.5.0)
-Suggests: 
-    rmarkdown,
-    knitr
+RoxygenNote: 7.3.2
+Depends: R (>= 4.4.0)
+LazyData: false
+Suggests: Biobase, BiocStyle, clusterProfiler, GSVA, methods, rmarkdown, 
+        knitr, testthat
 VignetteBuilder: knitr
+BugReports: https://github.com/CaluraLab/mitology/issues
+URL: https://github.com/CaluraLab/mitology

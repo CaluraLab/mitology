@@ -1,0 +1,56 @@
+## Information on 'sysdata.rda' generation ##
+
+The R/sysdata.rda object containes all the needed information for the analysis 
+of the mitochondrial activity and the structures for the dendrogram plots.
+
+As a first step, a mitochondrial gene list was created collecting mitochondrial 
+related genes from mitochondrial-specific databases: MitoCarta3.0 [Rath S, 
+Sharma R, Gupta R, et al. MitoCarta3.0: an updated mitochondrial proteome now 
+with sub-organelle localization and pathway annotations. Nucleic Acids Res. 
+2021;49(D1):D1541-D1547.], the Integrated Mitochondrial Protein Index (IMPI) 
+[Smith AG, Smith AC, Palmer OC, et al. A Curated Collection of Human 
+Mitochondrial Proteins — the Integrated Mitochondrial Protein Index (IMPI). 
+Available at SSRN: https://ssrn.com/abstract=4042282] and MSeqDR [Falk MJ, 
+Shen L, Gonzalez M, et al. Mitochondrial Disease Sequence Data Resource 
+(MSeqDR): a global grass-roots consortium to facilitate deposition, curation, 
+annotation, and integrated analysis of genomic data for the mitochondrial 
+disease clinical and research communities. Mol Genet Metab. 2015;114(3):388-396]
+and from Gene Ontology [Harris MA, Clark J, Ireland A, et al. The Gene Ontology 
+(GO) database and informatics resource. Nucleic Acids Res. 2004;32(Database 
+issue):D258-D261] database (genes annotated in terms including “mitochondri” in 
+the description).
+
+Then, we exploited MitoCarta3.0, Reactome [Croft D, O'Kelly G, Wu G, et al. 
+Reactome: a database of reactions, pathways and biological processes. Nucleic 
+Acids Res. 2011;39(Database issue):D691-D697] and GO hierarchies to re-organize 
+mitochondrial gene sets. 
+
+The whole and original structure from the mitochondrial-oriented MitoCarta3.0 
+database was kept. Reactome and GO, instead, were filtered to focus on 
+mitochondrial relevant processes. We explored the GO-CC and GO-BP terms. To 
+filter the GO terms we performed a four-steps selection. 
+Firstly, terms were filtered by size, keeping all the ones with at 
+least 10 mitochondrial genes. Then, we pruned the GO trees of CC and BP by the 
+graph levels, filtering out the 0°, 1°, 2° and 3° levels and keeping the terms 
+from the 4° level. Then, we tested the enrichment of the remaining sets for our 
+mitochondrial gene list with the `enrichGO` function from the `clusterProfiler` 
+R package (v4.14.3). Only sets with FDR lower than 0.05 have been passed to the 
+next step. Finally, the last selection was topological, we exploited the GO 
+hierarchical organization selecting the more general enriched gene sets 
+filtering out their offspring terms.
+
+The Reactome pathways were retrieved with the `graphite` R package (v1.52.0). 
+Reactome has a simpler structure with far less level of nested pathways, thus 
+we applied only three filtering steps: number of mitochondrial genes over 10; 
+FDR under 0.05 (enrichment computed with the `phyper` function) and filtering 
+of the offspring pathways.
+
+Once we obtained the final terms and pathways respectively from GO and Reactome,
+we extracted the mitochondrial gene sets by keeping only the genes included in 
+the mitochondrial list. The same names of the original terms/pathways were kept 
+for the gene sets included in mitology. The final gene sets and the 
+corresponding tree-structures of the four databases were kept and included in 
+the mitology package.
+
+The final gene sets, with also the tree structure information, are stored 
+in R/sysdata.rda.

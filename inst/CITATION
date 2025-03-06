@@ -1,0 +1,16 @@
+citHeader("To cite mitology in publications use:")
+
+citEntry(
+    entry    = "Article",
+    title    = "Dissect mitochondrial activity by transcriptome data with mitology R package",
+    author   = personList(as.person("Stefania Pirrotta"),
+                          as.person("Massimo Bonora"),
+                          as.person("Enrica Calura")),
+    journal  = "bioRxiv",
+    year     = 2024,
+    doi      = "https://doi.org/10.1101/2024.11.27.625451",
+    textVersion = paste("Pirrotta S, Bonora M, Calura R (2024): Dissect",
+                        "mitochondrial activity by transcriptome data with",
+                        "mitology R package. bioRxiv,",
+                        "https://doi.org/10.1101/2024.11.27.625451")
+)
