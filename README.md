@@ -1,23 +1,29 @@
-Mitology R package
+mitology R package
 ================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-<img src=./vignettes/figures/puzzle_mitology.png width="200" align="right" />
+<img src=./vignette/figures/puzzle_mitology.png width="200" align="right" />
 
 Mitology is an R package to dissect mitochondrial activity from gene
-expression data. We provide in R environment MitoCarta 3.0 pathways and
+expression data. We provide in R environment MitoCarta3.0 pathways and
 we exploited Reactome pathways and GO hierarchies to derive and
 re-organize mitochondrial-specific gene sets.
 
 ## Installation
 
-You can install the current version of mitology from GitHub with:
+The `mitology` package can be installed from Bioconductor:
 
 ``` r
-BiocManager::install("CaluraLab/mitology", dependencies = TRUE, build_vignettes = TRUE)
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("mitology")
 ```
 
-## Plot Examples
+Also you can install the latest version of `mitology` from GitHub with:
 
-<img src=./vignettes/figures/4dendrogram_mitology.png />
+``` r
+library(remotes)
+remotes::install_github("CaluraLab/mitology")
+```
