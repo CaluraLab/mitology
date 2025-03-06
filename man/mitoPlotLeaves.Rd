@@ -2,24 +2,44 @@
 % Please edit documentation in R/analysis_and_plot.R
 \name{mitoPlotLeaves}
 \alias{mitoPlotLeaves}
-\title{Plot a circular heatmap of leaf ssGSEA scores on the dendrogram.}
+\title{Circular heatmap of mitochondrial gene set ssGSEA scores.}
 \usage{
 mitoPlotLeaves(
-  leafResults = NULL,
+  leafResults,
   database = "MitoCarta",
+  sections = FALSE,
   samples = NULL,
-  outerNames = "sections"
+  labelNames = "sections",
+  ...
 )
 }
 \arguments{
-\item{leafResults}{Result of the mitoAnalysisLeaves function.}
+\item{leafResults}{output of the enrichment.}
 
-\item{database}{One of MitoCarta, Reactome, GO-CC and GO-BP. Default is MitoCarta.}
+\item{database}{character string saying the database used for the analysis.
+Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".}
 
-\item{samples}{A vector with the names of samples to be plotted. If NULL all samples are plotted.}
+\item{sections}{logical. Either to keep the aggregated gene set categories 
+or the specific gene sets. Default is FALSE.}
 
-\item{outerNames}{Whether to plot section names or leaves names. Default is sections.}
+\item{samples}{character vector with the names of samples to be plotted.
+Otherwise all samples are plotted.}
+
+\item{labelNames}{character string that says to plot the names of "sections"
+or "leaves".}
+
+\item{...}{other arguments passed on to the \code{\link[ggtree]{gheatmap}}
+function.}
+}
+\value{
+A \code{\link[ggplot2]{ggplot}} object.
 }
 \description{
-Plot a circular heatmap of leaf ssGSEA scores on the dendrogram.
+Given the enrichment output, it returns a circular heatmap of 
+the ssGSEA scores for each specific mitochondrial gene set (leaf of the 
+database tree) or gene set group (section of the database tree).
+}
+\examples{
+MClist <- getGeneSets()
+
 }
