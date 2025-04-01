@@ -120,13 +120,6 @@ res_ssGSEA <- gsva(gsvaPar)
 ## Visualization
 When we obtain a matrix of scores for each sample in each gene set we can visualize it by plotting a circular heatmap on the gene set tree hierarchy.
 
-```{r, message=FALSE}
-res_scale_ssGSEA <- t(scale(t(assay(res_ssGSEA))))
-mitoTreeHeatmap(
-    data = res_scale_ssGSEA, database = "MitoCarta", 
-    labelNames = "leaves", font.size = 1)
-```
-
 We can summarize the information of samples by taking the mean value for each OV subtype.
 
 ```{r}
