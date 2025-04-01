@@ -27,10 +27,11 @@ getGeneSets <- function(
         database = "MitoCarta", nametype = "ENSEMBL", 
         objectType = "list", sections = FALSE){
     
-    .consistencyCheck(database, nametype, objectType, sections)
+    .consistencyCheck(
+        database = database, nametype = nametype, 
+        objectType = objectType, sections = sections)
     
     geneset <- .DBgeneset(database)
-    # geneset <- geneset[[nametype]]
     geneset <- .geneIDtrans(nametype, geneset, database)
     
     if(sections){
@@ -72,7 +73,6 @@ getGeneSets <- function(
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #'
-#' @importFrom SummarizedExperiment assay
 #' @importFrom ggtree ggtree gheatmap geom_tiplab geom_cladelab
 #' @importFrom scales rescale
 #' @importFrom ape extract.clade Ntip
@@ -92,34 +92,25 @@ mitoTreeHeatmap <- function(
         data, database = "MitoCarta", sections = FALSE, 
         samples = NULL, labelNames = "sections", ...){
 
-    if(!(database %in% c("MitoCarta", "Reactome", "GO-CC", "GO-BP"))){
-        stop("Database has to be MitoCarta, Reactome, GO-CC or GO-BP")}
-    if(labelNames != "leaves" & labelNames != "sections"){
-        stop("Label names must be leaves or sections")}
+    .consistencyCheck(
+        database = database, sections = sections, labelNames = labelNames)
 
     dbtree <- .DBtree(database = database)
     dbdend <- ggtree(
         tr = dbtree, layout = "fan", open.angle = 25, color = "gray60")
 
-    # if(!all(rownames(data) %in% dbtree$tip.label)){stop(
-    #     "Database does not correspond with the results")}
     if(is.null(samples)){samples <- colnames(data)
     } else if(length(samples)<2){stop("Samples must be at least 2")
     } else if(!(all(samples %in% colnames(data)))){
         stop("All samples must be included in data")}
-
     data <- data[,colnames(data) %in% samples]
-
     CatNodes <- dbtree$edge[,2][dbtree$edge[,1]==length(dbtree$tip.label)+1]
-    
     if(sections){
         data <- do.call(rbind, lapply(seq_along(CatNodes), function(x){
             clade <- extract.clade(dbtree, node = CatNodes[x])
             data[rep(x, length(clade$tip.label)),]}))
         rownames(data) <- dbtree$tip.label }
-    
     plotPar <- .plotParams(database = database)
-
     dots <- list(...)
     args <- .matchArguments(dots, list(
         p = dbdend, data = data, colnames = TRUE, 
@@ -128,25 +119,19 @@ mitoTreeHeatmap <- function(
     maxScore <- max(abs(data))
     g <- g + scale_fill_gradientn(
         colours = c("#701d46","#CB347F", "white", plotPar$DBcol),
-        name = "ssGSEA\nScore",
-        values = rescale(c(-maxScore, 0, maxScore)),
-        limits = c(-maxScore, maxScore), 
-        na.value = "gray90") +
+        name = "ssGSEA\nScore", limits = c(-maxScore, maxScore), 
+        values = rescale(c(-maxScore, 0, maxScore)), na.value = "gray90") +
         theme(legend.position = "bottom")
-
-    dbwidth <- (
-        dbdend$data$x %>% range(na.rm=TRUE) %>% diff) / ncol(data)
-
+    dbwidth <- (dbdend$data$x %>% range(na.rm=TRUE) %>% diff) / ncol(data)
     if(labelNames == "leaves" & !sections){
         g <- g + geom_tiplab(offset = dbwidth*(ncol(data)+1))
     } else {
         CatNames <- dbtree$node.label[CatNodes-Ntip(dbtree)]
         g <- g + geom_cladelab(
             node = CatNodes, label = CatNames, barsize = 2, 
-            offset.text = dbwidth*2, offset = dbwidth*(ncol(data)+1), 
+            offset.text = .3, offset = dbwidth*(ncol(data)+1), 
             barcolour = plotPar$DBcol[1], angle = "auto", horizontal = TRUE) +
             theme(legend.key.size = unit(5, "mm")) }
-
     return(g)
 }
 

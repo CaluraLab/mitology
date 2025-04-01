@@ -1,5 +1,7 @@
 
-.consistencyCheck <- function(database, nametype, objectType, sections) {
+.consistencyCheck <- function(
+        database = "MitoCarta", nametype = "ENSEMBL", objectType = "list", 
+        sections = FALSE, labelNames = "sections") {
     if(!(database %in% c("MitoCarta", "Reactome", "GO-CC", "GO-BP"))){
         stop("Database has to be MitoCarta, Reactome, GO-CC or GO-BP")}
     if (!(nametype %in% c("SYMBOL", "ENTREZID", "ENSEMBL"))) {
@@ -7,6 +9,8 @@
     if(!(objectType %in% c("list", "dataframe"))){
         stop("Database has to be list or dataframe")}
     if(!is.logical(sections)){ stop("sections must be logical") }
+    if(labelNames != "leaves" & labelNames != "sections"){
+        stop("Label names must be leaves or sections")}
 }
 
 .DBgeneset <- function(database){
@@ -51,14 +55,4 @@
 .matchArguments <- function(dots, defaults) {
     defaults[names(defaults) %in% names(dots)] <- NULL
     c(defaults, dots)
-}
-
-#' @importFrom stats rpois
-.fakeData <- function(db) {
-    g <- unique(unlist(db))
-    n <- length(g) * 5
-    rmatrix <- matrix(rpois(n, 100), ncol = 5)
-    rownames(rmatrix) <- g
-    colnames(rmatrix) <- paste0("Sample_", seq_len(5))
-    return(rmatrix)
 }
