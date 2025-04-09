@@ -1,7 +1,7 @@
 Package: mitology
 Type: Package
 Title: Study of mitochondrial activity from RNA-seq data
-Version: 0.99.2
+Version: 0.99.3
 Authors@R: c(person("Stefania", "Pirrotta", role = c("cre", "aut"),
                     email = "stefania.pirrotta@unipd.it",
                     comment = c(ORCID = "0009-0004-0030-217X")),
@@ -20,7 +20,7 @@ biocViews: GeneExpression, RNASeq, Visualization, SingleCell, Spatial,
 Imports: AnnotationDbi, ape, ggplot2, ggtree, magrittr, org.Hs.eg.db, scales
 Encoding: UTF-8
 RoxygenNote: 7.3.2
-Depends: R (>= 4.6.0)
+Depends: R (>= 4.5.0)
 LazyData: false
 Suggests: Biobase, BiocStyle, clusterProfiler, GSVA, methods, rmarkdown, 
         knitr, SummarizedExperiment, testthat
