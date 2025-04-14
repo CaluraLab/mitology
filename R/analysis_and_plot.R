@@ -129,9 +129,88 @@ mitoTreeHeatmap <- function(
         CatNames <- dbtree$node.label[CatNodes-Ntip(dbtree)]
         g <- g + geom_cladelab(
             node = CatNodes, label = CatNames, barsize = 2, 
-            offset.text = .3, offset = dbwidth*(ncol(data)+1), 
+            offset.text = (g$data$x[1]/5)/4, 
+            offset = (g$data$x[1]/5)*(ncol(data)+1), 
             barcolour = plotPar$DBcol[1], angle = "auto", horizontal = TRUE) +
             theme(legend.key.size = unit(5, "mm")) }
+    return(g)
+}
+
+
+#' Heatmap of mitochondrial gene sets.
+#'
+#' @description Given a matrix of scores, it returns a heatmap of
+#' the mitochondrial gene sets.
+#'
+#' @param data matrix or data.frame with samples in columns and mitochondrial 
+#' gene sets in rows.
+#' @param database character string saying the database used for the analysis.
+#' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
+#' @param sampleAnnot character vector with samples' annotation.
+#' @param splitSamples logical. If TRUE it splits samples by annotation. 
+#' sampleAnnot must be provided.
+#' @param splitSections logical. If TRUE it splits gene sets by main section.
+#' @param ... other parameters specific of the function
+#' \code{\link[ComplexHeatmap]{Heatmap}}.
+#'
+#' @return A \code{\link[ComplexHeatmap]{Heatmap-class}} object.
+#'
+#' @importFrom ape extract.clade
+#' @importFrom ComplexHeatmap Heatmap rowAnnotation HeatmapAnnotation
+#' @importFrom circlize colorRamp2
+#'
+#' @examples
+#' MClist <- getGeneSets()
+#' n <- length(names(MClist)) * 5
+#' rmatrix <- matrix(rnorm(n, 0), ncol = 5)
+#' rownames(rmatrix) <- names(MClist)
+#' colnames(rmatrix) <- paste0("Sample_", seq_len(5))
+#' mitoHeatmap(data = rmatrix, database = "MitoCarta")
+#'
+#' @export
+mitoHeatmap <- function(
+        data, database = "MitoCarta", sampleAnnot = NULL, 
+        splitSamples = FALSE, splitSections = FALSE, ...){
+    
+    if(!(database %in% c("MitoCarta", "Reactome", "GO-CC", "GO-BP"))){
+        stop("Database has to be MitoCarta, Reactome, GO-CC or GO-BP")}
+    if (!is.null(sampleAnnot)) { if (length(sampleAnnot)!=ncol(data)) {
+        stop("sampleAnnot length is different than samples dimension")}
+    } else { if (splitSamples) { stop(
+        "splitSamples can be TRUE only if sampleAnnot is provided")}}
+    
+    dbtree <- .DBtree(database = database)
+    
+    CatNodes <- dbtree$edge[,2][dbtree$edge[,1]==length(dbtree$tip.label)+1]
+    CatAnnot <- unlist(lapply(seq_along(CatNodes), function(x){
+        clade <- extract.clade(dbtree, node = CatNodes[x])
+        rep(clade$node.label[1], length(clade$tip.label))}))
+    CatAnnot <- CatAnnot[match(rownames(data), dbtree$tip.label)]
+    
+    plotPar <- .plotParams(database = database)
+    mycol <- colorRamp2(
+        c(min(data), mean(c(min(data),0)), 0, mean(c(max(data),0)), max(data)), 
+        c("#701d46","#CB347F", "white", plotPar$DBcol))
+    
+    dots <- list(...)
+    args <- .matchArguments(dots, list(
+        matrix = data, name = "score", show_row_names = FALSE, col = mycol))
+    
+    if(splitSections){
+        args$row_split <- CatAnnot
+        args$row_title_rot <- 0
+    } else {
+        ha <- rowAnnotation(Section = CatAnnot)
+        args$right_annotation <- ha }
+    
+    if (!is.null(sampleAnnot)) {
+        if (splitSamples) {
+            args$column_split <- sampleAnnot
+        } else {
+            hatop <- HeatmapAnnotation(sampleAnnot = sampleAnnot)
+            args$top_annotation <- hatop}}
+    
+    g <- do.call(Heatmap, args)
     return(g)
 }
 

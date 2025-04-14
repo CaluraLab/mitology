@@ -1,7 +1,7 @@
 Package: mitology
 Type: Package
 Title: Study of mitochondrial activity from RNA-seq data
-Version: 0.99.3
+Version: 0.99.4
 Authors@R: c(person("Stefania", "Pirrotta", role = c("cre", "aut"),
                     email = "stefania.pirrotta@unipd.it",
                     comment = c(ORCID = "0009-0004-0030-217X")),
@@ -17,7 +17,8 @@ Description: mitology allows to study the mitochondrial activity throught
 License: AGPL-3
 biocViews: GeneExpression, RNASeq, Visualization, SingleCell, Spatial, 
         Pathways, Reactome, GO
-Imports: AnnotationDbi, ape, ggplot2, ggtree, magrittr, org.Hs.eg.db, scales
+Imports: AnnotationDbi, ape, circlize, ComplexHeatmap, ggplot2, ggtree, 
+        magrittr, org.Hs.eg.db, scales
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Depends: R (>= 4.5.0)

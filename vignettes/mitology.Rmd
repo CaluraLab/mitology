@@ -148,6 +148,9 @@ mitoTreeHeatmap(
 
 These analysis can be done with the mitochondrial gene sets from Reactome, GO-CC and GO-BP.
 
+# Additional functionalities
+More tutorials and examples of other plots are available on an [extended tutorial on GitHub](https://github.com/CaluraLab/mitologyTutorials). 
+
 # Bibliography
 [1] Rath S, Sharma R, Gupta R, et al. MitoCarta3.0: an updated mitochondrial proteome now with sub-organelle localization and pathway annotations. Nucleic Acids Res 2020; 49:D1541–D1547
 
