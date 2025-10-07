@@ -20,3 +20,15 @@
 #' @usage data(ovse)
 #'
 "ovse"
+
+
+#' Mitochondrial genes
+#'
+#' Here are listed all the final mitochondrial genes in ENSEMBL id, the 
+#' corresponding SYMBOL id and the database from where they were collected.
+#'
+#' @docType data
+#' 
+#' @usage data(MitoGenesDB)
+#' 
+"MitoGenesDB"

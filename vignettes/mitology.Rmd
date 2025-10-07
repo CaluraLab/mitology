@@ -43,32 +43,49 @@ if (!require("BiocManager", quietly = TRUE))
 BiocManager::install("mitology")
 ```
 
+# Mitochondrial Genes
+A list of mitochondrial genes was obtained by joining four public resources that were developed in the last years to define the mitochondrial proteome with the aim to study mitochondrial functions, dysfunctions and diseases. Specifically, we collected the genes from: MitoCarta3.0 [1], the Integrated Mitochondrial Protein Index (IMPI) [2], the Mitochondrial Disease Sequence Data Resource (MSeqDR) [3] and The Gene Ontology (GO) [4].
+
+In MitoGenesDB table we can see the full list along with the database from with it was retrieved.
+
+```{r}
+library(mitology)
+data(MitoGenesDB)
+head(MitoGenesDB)
+```
+
 # Gene sets collected in mitology
 ## Gene sets from MitoCarta3.0
 The whole and original structure from the MitoCarta3.0 database was kept and included in mitology organized in a three-tier hierarchy.
+
 
 ```{r, echo=FALSE, fig.wide=FALSE}
 knitr::include_graphics("figures/MitoCarta_gene_sets.png")
 # <img src=./figures/MitoCarta_gene_sets.png class="center" />
 ```
 
+
 In addition to MitoCarta3.0, we decided to propose three more comprehensive mitochondrial-oriented gene set resources exploiting Reactome, GO Biological Processes (GO-BP), and GO Cellular Components (GO-CC).
 
 ## Gene sets from GO
 We explored the GO-CC and GO-BP terms. To filter the GO terms we performed a four-steps selection. Firstly, terms were filtered by size, keeping all the ones with at least 10 mitochondrial genes. Then, we pruned the GO trees of CC and BP by the graph levels, filtering out the 0°, 1°, 2° and 3° levels and keeping the terms from the 4° level. Then, we tested the enrichment of the remaining sets for our mitochondrial gene list with the `enrichGO` function from the `clusterProfiler` R package (v4.14.3). Only sets with FDR lower than 0.05 have been passed to the next step. Finally, the last selection was topological, we exploited the GO hierarchical organization selecting the more general enriched gene sets filtering out their offspring terms.
+
 
 ```{r, echo=FALSE, fig.wide=FALSE}
 knitr::include_graphics("figures/GO_gene_sets.png")
 # <img src=./figures/GO_gene_sets.png class="center" />
 ```
 
+
 ## Gene sets from Reactome
 The Reactome pathways were retrieved with the `graphite` R package (v1.52.0). Reactome has a simpler structure with far less level of nested pathways, thus we applied only three filtering steps: number of mitochondrial genes over 10; FDR under 0.05 (enrichment computed with the `phyper` function) and filtering of the offspring pathways.
+
 
 ```{r, echo=FALSE, fig.wide=FALSE}
 knitr::include_graphics("figures/Reactome_gene_sets.png")
 # <img src=./figures/Reactome_gene_sets.png class="center" />
 ```
+
 
 Once we obtained the final terms and pathways respectively from GO and Reactome, we extracted the mitochondrial gene sets by keeping only the genes included in the mitochondrial list. The same names of the original terms/pathways were kept for the gene sets included in mitology. The final gene sets and the corresponding tree-structures of the four databases were kept and included in the mitology package.
 
@@ -77,7 +94,6 @@ Once we obtained the final terms and pathways respectively from GO and Reactome,
 The `getGeneSets` function allows to get the mitochondrial gene sets. It returns them for one of the four possible databases (MitoCarta, Reactome, GO-CC and GO-BP) by the `database` argument. The `nametype` argument says the type of gene name ID, either one of SYMBOL, ENTREZID or ENSEMBL. The `objectType` argument can be set to return the gene sets in form of a list or a data frame.
 
 ```{r, message=FALSE}
-library(mitology)
 MC_df <- getGeneSets(
     database = "MitoCarta", nametype = "SYMBOL", objectType = "dataframe")
 
@@ -91,7 +107,8 @@ In the following section, we use an example bulk expression dataset of ovarian c
 ```{r, message=FALSE}
 # loading packages
 library(SummarizedExperiment)
-library(clusterProfiler)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
 library(GSVA)
 library(Biobase)
 ```
@@ -103,14 +120,39 @@ ovse
 ```
 
 ### Enrichment analyses of the mitochondrial gene sets
-We can perform an over representation analysis with `clusterProfiler`.
+We can perform an over representation analysis with `enrichMito`.
 
-```{r}
-genes <- rownames(ovse)[elementMetadata(ovse)$PROvsIMR_FDR < 0.001]
-res_ora <- enricher(gene = genes, TERM2GENE = MC_df)
+```{r, warning=FALSE}
+genes <- rownames(ovse)[elementMetadata(ovse)$PROvsIMR_FDR < 0.01]
+genes <- mapIds(
+    org.Hs.eg.db, keys = genes, column = "ENSEMBL",
+    keytype = "SYMBOL", multiVals = "first")
+
+enrichresMC <- enrichMito(genes = genes, database = "MitoCarta")
+mitoTreePoint(data = enrichresMC, database = "MitoCarta", pvalCutoff = .9, color = "pvalue")
+
+enrichresRT <- enrichMito(genes = genes, database = "Reactome")
+mitoTreePoint(data = enrichresRT, database = "Reactome", pvalCutoff = .4, color = "pvalue")
 ```
 
-Or also a single sample gene set enrichment analysis (ssGSEA) with `GSVA`.
+We can also compute the gene set enrichment analysis with `gseaMito`.
+```{r, warning=FALSE}
+geneslFC <- elementMetadata(ovse)$PROvsIMR_logFC
+names(geneslFC) <- rownames(ovse)
+names(geneslFC) <- mapIds(
+    org.Hs.eg.db, keys = names(geneslFC), column = "ENSEMBL",
+    keytype = "SYMBOL", multiVals = "first")
+geneslFC <- sort(geneslFC, decreasing = TRUE)
+geneslFC <- geneslFC[!is.na(names(geneslFC))]
+
+gsearesMC <- gseaMito(genes = geneslFC, database = "MitoCarta")
+# mitoTreePoint(data = gseares, database = "MitoCarta", pvalCutoff = 1.1, color = "NES")
+
+gsearesRT <- gseaMito(genes = geneslFC, database = "Reactome")
+# mitoTreePoint(data = enrichres, database = "Reactome", pvalCutoff = .4, color = "NES")
+```
+
+Or also a single sample GSEA (ssGSEA) with `GSVA`.
 
 ```{r}
 gsvaPar <- ssgseaParam(exprData = ovse, geneSets = MC_list)
@@ -118,9 +160,9 @@ res_ssGSEA <- gsva(gsvaPar)
 ```
 
 ## Visualization
-When we obtain a matrix of scores for each sample in each gene set we can visualize it by plotting a circular heatmap on the gene set tree hierarchy.
+When we obtain a matrix of scores for each sample in each gene set we can visualize it in an heatmap.
 
-We can summarize the information of samples by taking the mean value for each OV subtype.
+Since we obtained a single score for each cell and it would be difficult to visualize it, we can summarize the information of samples by taking the mean value for each OV subtype.
 
 ```{r}
 res_ssGSEA_subtype <- do.call(
@@ -132,18 +174,28 @@ rownames(res_ssGSEA_subtype) <- rownames(res_ssGSEA)
 res_ssGSEA_subtype <- t(scale(t(res_ssGSEA_subtype)))
 ```
 
+```{r fig.height=5.5, fig.width=4.5}
+mitoHeatmap(data = res_ssGSEA_subtype, database = "MitoCarta")
+```
+
+```{r fig.height=5.2, fig.width=5.5}
+mitoHeatmap(data = res_ssGSEA_subtype, database = "MitoCarta", splitSections = TRUE)
+```
+
+We can also visualize it by plotting a circular heatmap on the gene set tree hierarchy.
+
 ```{r, message=FALSE}
-mitoTreeHeatmap(
-    data = res_ssGSEA_subtype, database = "MitoCarta", 
-    labelNames = "leaves", font.size = 1)
+# mitoTreeHeatmap(
+#     data = res_ssGSEA_subtype, database = "MitoCarta", 
+#     labelNames = "leaves", font.size = 1)
 ```
 
 It is possible to plot only the main section arguments instead of the single gene set names.
 
 ```{r, message=FALSE}
-mitoTreeHeatmap(
-    data = res_ssGSEA_subtype, database = "MitoCarta",
-    labelNames = "sections", font.size = 3)
+# mitoTreeHeatmap(
+#     data = res_ssGSEA_subtype, database = "MitoCarta",
+#     labelNames = "sections", font.size = 3)
 ```
 
 These analysis can be done with the mitochondrial gene sets from Reactome, GO-CC and GO-BP.

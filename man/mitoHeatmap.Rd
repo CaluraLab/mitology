@@ -22,7 +22,7 @@ Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".}
 
 \item{sampleAnnot}{character vector with samples' annotation.}
 
-\item{splitSamples}{logical. If TRUE it splits samples by annotation. 
+\item{splitSamples}{logical. If TRUE it splits samples by annotation.
 sampleAnnot must be provided.}
 
 \item{splitSections}{logical. If TRUE it splits gene sets by main section.}

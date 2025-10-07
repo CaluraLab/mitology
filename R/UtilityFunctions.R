@@ -56,3 +56,14 @@
     defaults[names(defaults) %in% names(dots)] <- NULL
     c(defaults, dots)
 }
+
+# convert DB names
+.mitologyName <- function(names, database){
+    if(database == "Reactome"){
+        names <- gsub(" ", "_", names)
+        names <- gsub("(,|\\(|\\))", "", names)
+        names <- gsub("\\/", "-", names)
+    } else if(database == "GO"){
+        names <- gsub(" |,", "_", names)}
+    return(names)
+}

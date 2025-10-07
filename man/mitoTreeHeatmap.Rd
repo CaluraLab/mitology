@@ -46,6 +46,6 @@ n <- length(names(MClist)) * 5
 rmatrix <- matrix(rnorm(n, 0), ncol = 5)
 rownames(rmatrix) <- names(MClist)
 colnames(rmatrix) <- paste0("Sample_", seq_len(5))
-mitoTreeHeatmap(data = rmatrix, database = "MitoCarta")
+
 
 }

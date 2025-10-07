@@ -85,7 +85,7 @@ getGeneSets <- function(
 #' rmatrix <- matrix(rnorm(n, 0), ncol = 5)
 #' rownames(rmatrix) <- names(MClist)
 #' colnames(rmatrix) <- paste0("Sample_", seq_len(5))
-#' mitoTreeHeatmap(data = rmatrix, database = "MitoCarta")
+#' 
 #'
 #' @export
 mitoTreeHeatmap <- function(
@@ -147,7 +147,7 @@ mitoTreeHeatmap <- function(
 #' @param database character string saying the database used for the analysis.
 #' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
 #' @param sampleAnnot character vector with samples' annotation.
-#' @param splitSamples logical. If TRUE it splits samples by annotation. 
+#' @param splitSamples logical. If TRUE it splits samples by annotation.
 #' sampleAnnot must be provided.
 #' @param splitSections logical. If TRUE it splits gene sets by main section.
 #' @param ... other parameters specific of the function
@@ -214,3 +214,176 @@ mitoHeatmap <- function(
     return(g)
 }
 
+
+#' Mitochondrial Enrichment Analysis of a gene list.
+#' 
+#' @description Given a vector of genes, this function will return the 
+#' enrichment analysis for the mitochondrial gene sets after FDR control. For 
+#' the Reactome, GO-CC and GO-BP databases it returns also the enrichment 
+#' results for the corresponding original pathways.
+#'
+#' @param genes a vector of gene ENSEMBL id.
+#' @param database character string saying the database to use for the analysis.
+#' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
+#'
+#' @importFrom clusterProfiler enricher enrichGO
+#' @importFrom AnnotationDbi mapIds
+#' @importFrom org.Hs.eg.db org.Hs.eg.db
+#' @importFrom ReactomePA enrichPathway
+#' 
+#' @return enrichment analysis for the mitochondrial gene sets.
+#' 
+#' @export
+enrichMito <- function(genes, database){
+    DB_df <- getGeneSets(database = database, objectType = "dataframe")
+    orM <- enricher(gene = genes, TERM2GENE = DB_df, universe = MitoGenes)
+    orM <- orM@result
+    
+    if(database == "MitoCarta"){ return(list(MitoCarta = orM)) }
+    
+    if(database == "Reactome"){
+        genes <- mapIds(
+            x = org.Hs.eg.db, keys = genes, 
+            column = "ENTREZID", keytype = "ENSEMBL")
+        orO <- enrichPathway(gene = genes, maxGSSize = 1000, readable = TRUE)
+        orO <- orO@result
+        orO$Description <- .mitologyName(names = orO$Description, database)
+    } else {
+        orO <- enrichGO(
+            gene = genes, keyType = "ENSEMBL", OrgDb = "org.Hs.eg.db", 
+            ont = substring(database, 4, 5), pAdjustMethod = "BH", 
+            readable = TRUE, pvalueCutoff = 1.1, qvalueCutoff = 1.1,
+            minGSSize = 10, maxGSSize = 100000)
+        orO <- orO@result
+        orO$Description <- .mitologyName(names = orO$Description, "GO")
+    }
+    
+    orO <- orO[orO$Description %in% unique(DB_df$term),]
+    or <- list(orM, orO)
+    names(or) <- c("mitology", "original")
+    return(or)
+}
+
+
+#' Mitochondrial GSEA of a gene list.
+#' 
+#' @description Gene set enrichment analysis for the mitochondrial gene sets. 
+#' For the Reactome, GO-CC and GO-BP databases it returns also the GSEA 
+#' results for the corresponding original pathways.
+#'
+#' @param genes order ranked gene vector named by ENSEMBL id.
+#' @param database character string saying the database to use for the analysis.
+#' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
+#'
+#' @importFrom clusterProfiler GSEA gseGO
+#' @importFrom AnnotationDbi mapIds
+#' @importFrom org.Hs.eg.db org.Hs.eg.db
+#' @importFrom ReactomePA gsePathway
+#' 
+#' @return GSEA results for the mitochondrial gene sets.
+#' 
+#' @export
+gseaMito <- function(genes, database){
+    DB_df <- getGeneSets(database = database, objectType = "dataframe")
+    orM <- GSEA(geneList = genes, TERM2GENE = DB_df)
+    orM <- orM@result
+    
+    if(database == "MitoCarta"){ return(list(MitoCarta = orM)) }
+    
+    if(database == "Reactome"){
+        names(genes) <- mapIds(
+            x = org.Hs.eg.db, keys = names(genes), 
+            column = "ENTREZID", keytype = "ENSEMBL")
+        genes <- genes[!is.na(names(genes))]
+        genes <- genes[!duplicated(names(genes))]
+        orO <- gsePathway(geneList = genes, maxGSSize = 1000)
+        orO <- orO@result
+        orO$Description <- .mitologyName(names = orO$Description, database)
+    } else {
+        orO <- gseGO(
+            geneList = genes, keyType = "ENSEMBL", OrgDb = "org.Hs.eg.db", 
+            ont = substring(database, 4, 5), pAdjustMethod = "BH", 
+            pvalueCutoff = 1.1, minGSSize = 10, maxGSSize = 100000)
+        orO <- orO@result
+        orO$Description <- .mitologyName(names = orO$Description, "GO")
+    }
+    orO <- orO[orO$Description %in% unique(DB_df$term),]
+    or <- list(orM, orO)
+    names(or) <- c("mitology", "original")
+    return(or)
+}
+
+
+#' Circular dotplot on mitochondrial gene set tree.
+#'
+#' @description A circular dotplot of the mitochondrial enrichment results.
+#' 
+#' @param data named list of the result from enrichMito or gseaMito.
+#' @param database character string saying the database to use for the analysis.
+#' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
+#' @param pvalCutoff pvalue cutoff to select enriched gene sets
+#' @param labsize label size
+#' @param max_point_size max point size
+#' @param color variable used to color enriched terms, e.g. 'pvalue', 
+#' 'p.adjust' or 'NES'.
+#' 
+#' @importFrom ggtree ggtree geom_tippoint geom_tiplab
+#' @import ggplot2
+#' 
+#' @export
+mitoTreePoint <- function(
+    data, database = "MitoCarta", pvalCutoff = 0.05, 
+    labsize = 3, max_point_size = 4, color = "p.adjust"){
+    
+    .consistencyCheck(database = database)
+    plotPar <- .plotParams(database = database)
+    dbtree <- .DBtree(database = database)
+    g <- ggtree(tr = dbtree, layout = "fan", open.angle = 25, color = "gray60")
+    
+    sampleGroup <- names(data)
+    data <- lapply(data, function(x) x[x$Description %in% dbtree$tip.label,])
+    data <- lapply(data, function(x) x[x$p.adjust < pvalCutoff,])
+    if(sum(unlist(lapply(data, function(x) nrow(x))))<1){
+        stop("There are no gene sets with a p.adjust under the pvalCutoff")}
+    names(data) <- sampleGroup
+    
+    for(i in seq_along(data)){
+        g$data[, paste(color, i, sep = "_")] <- NA
+        g$data[match(data[[i]]$Description, dbtree$tip.label), 
+               paste(color, i, sep = "_")] <- data[[i]][,color]
+        g$data[, paste("count", i, sep = "_")] <- NA
+        g$data[match(data[[i]]$Description, dbtree$tip.label), 
+               paste("count", i, sep = "_")] <- data[[i]][
+                   ,grepl(pattern = "Count", colnames(data[[i]])) | 
+                       grepl(pattern = "setSize", colnames(data[[i]]))]}
+    
+    xpos <- g$data$x[1] + (g$data$x[1]/5)*(seq_along(data)-1)
+    
+    for(i in seq_along(data)){
+        g <- g + geom_tippoint(aes(
+            colour = .data[[paste(color, i, sep = "_")]], 
+            size = .data[[paste("count", i, sep = "_")]]), 
+            x = xpos[i])}
+    
+    g <- g + geom_text(aes(
+        x = c(xpos, rep(NA, nrow(g$data)-length(data))), 
+        label = c(sampleGroup, rep(NA, nrow(g$data)-length(data))), 
+        y = 0), angle = -45, hjust = 0, size = labsize)
+    g$data[-match(unique(unlist(lapply(data, function(x) x$Description))), 
+                  dbtree$tip.label), "label"] <- NA
+    g <- g + geom_tiplab(
+        offset = (g$data$x[1]/5)*(length(data)-.6), size = labsize)
+    
+    g <- g + scale_size_continuous(name = "", range = c(1, max_point_size)) +
+        scale_colour_viridis_c(name = color) +
+        theme_minimal() +
+        theme(legend.position = "bottom", 
+              axis.line.y = element_blank(), axis.text = element_blank(), 
+              panel.grid.minor.y = element_blank(), 
+              panel.grid.major.y = element_blank(), 
+              panel.grid.major.x = element_line(colour = c(
+                  NA, rep("grey90", length(xpos)-1), NA))) + 
+        scale_x_continuous(breaks = xpos)
+    
+    return(g)
+}
