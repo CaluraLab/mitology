@@ -1,7 +1,7 @@
 Package: mitology
 Type: Package
 Title: Study of mitochondrial activity from RNA-seq data
-Version: 0.99.4
+Version: 1.1.0
 Authors@R: c(person("Stefania", "Pirrotta", role = c("cre", "aut"),
                     email = "stefania.pirrotta@unipd.it",
                     comment = c(ORCID = "0009-0004-0030-217X")),
