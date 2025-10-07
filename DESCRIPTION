@@ -17,13 +17,13 @@ Description: mitology allows to study the mitochondrial activity throught
 License: AGPL-3
 biocViews: GeneExpression, RNASeq, Visualization, SingleCell, Spatial, 
         Pathways, Reactome, GO
-Imports: AnnotationDbi, ape, circlize, ComplexHeatmap, ggplot2, ggtree, 
-        magrittr, org.Hs.eg.db, scales
+Imports: AnnotationDbi, ape, circlize, clusterProfiler, ComplexHeatmap, 
+        ggplot2, ggtree, magrittr, org.Hs.eg.db, ReactomePA, scales
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends: R (>= 4.5.0)
 LazyData: false
-Suggests: Biobase, BiocStyle, clusterProfiler, GSVA, methods, rmarkdown, 
+Suggests: Biobase, BiocStyle, GSVA, methods, rmarkdown, 
         knitr, SummarizedExperiment, testthat
 VignetteBuilder: knitr
 BugReports: https://github.com/CaluraLab/mitology/issues
