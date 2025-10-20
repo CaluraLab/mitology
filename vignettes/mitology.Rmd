@@ -46,7 +46,7 @@ BiocManager::install("mitology")
 # Mitochondrial Genes
 A list of mitochondrial genes was obtained by joining four public resources that were developed in the last years to define the mitochondrial proteome with the aim to study mitochondrial functions, dysfunctions and diseases. Specifically, we collected the genes from: MitoCarta3.0 [1], the Integrated Mitochondrial Protein Index (IMPI) [2], the Mitochondrial Disease Sequence Data Resource (MSeqDR) [3] and The Gene Ontology (GO) [4].
 
-In MitoGenesDB table we can see the full list along with the database from with it was retrieved.
+In the MitoGenesDB table we can see the full list of genes along with the database from which it was retrieved.
 
 ```{r}
 library(mitology)
