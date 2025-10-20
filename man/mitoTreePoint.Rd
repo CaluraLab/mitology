@@ -31,3 +31,7 @@ Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".}
 \description{
 A circular dotplot of the mitochondrial enrichment results.
 }
+\examples{
+data(ovse)
+
+}

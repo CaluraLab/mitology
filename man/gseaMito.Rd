@@ -20,3 +20,7 @@ Gene set enrichment analysis for the mitochondrial gene sets.
 For the Reactome, GO-CC and GO-BP databases it returns also the GSEA 
 results for the corresponding original pathways.
 }
+\examples{
+data(ovse)
+
+}

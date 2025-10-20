@@ -129,10 +129,7 @@ genes <- mapIds(
     keytype = "SYMBOL", multiVals = "first")
 
 enrichresMC <- enrichMito(genes = genes, database = "MitoCarta")
-mitoTreePoint(data = enrichresMC, database = "MitoCarta", pvalCutoff = .9, color = "pvalue")
-
 enrichresRT <- enrichMito(genes = genes, database = "Reactome")
-mitoTreePoint(data = enrichresRT, database = "Reactome", pvalCutoff = .4, color = "pvalue")
 ```
 
 We can also compute the gene set enrichment analysis with `gseaMito`.
@@ -146,10 +143,7 @@ geneslFC <- sort(geneslFC, decreasing = TRUE)
 geneslFC <- geneslFC[!is.na(names(geneslFC))]
 
 gsearesMC <- gseaMito(genes = geneslFC, database = "MitoCarta")
-# mitoTreePoint(data = gseares, database = "MitoCarta", pvalCutoff = 1.1, color = "NES")
-
 gsearesRT <- gseaMito(genes = geneslFC, database = "Reactome")
-# mitoTreePoint(data = enrichres, database = "Reactome", pvalCutoff = .4, color = "NES")
 ```
 
 Or also a single sample GSEA (ssGSEA) with `GSVA`.
@@ -160,7 +154,14 @@ res_ssGSEA <- gsva(gsvaPar)
 ```
 
 ## Visualization
-When we obtain a matrix of scores for each sample in each gene set we can visualize it in an heatmap.
+The results obtained with the over representation analysis can be visualized with a dot plot over the database tree hierarchy.
+
+```{r}
+mitoTreePoint(data = enrichresMC, database = "MitoCarta", pvalCutoff = .9, color = "pvalue")
+mitoTreePoint(data = enrichresRT, database = "Reactome", pvalCutoff = .4, color = "pvalue")
+```
+
+Instead, when we obtain a matrix of scores for each sample in each gene set we can visualize it in an heatmap.
 
 Since we obtained a single score for each cell and it would be difficult to visualize it, we can summarize the information of samples by taking the mean value for each OV subtype.
 
@@ -185,23 +186,20 @@ mitoHeatmap(data = res_ssGSEA_subtype, database = "MitoCarta", splitSections = T
 We can also visualize it by plotting a circular heatmap on the gene set tree hierarchy.
 
 ```{r, message=FALSE}
-# mitoTreeHeatmap(
-#     data = res_ssGSEA_subtype, database = "MitoCarta", 
-#     labelNames = "leaves", font.size = 1)
+mitoTreeHeatmap(
+    data = res_ssGSEA_subtype, database = "MitoCarta",
+    labelNames = "leaves", font.size = 1)
 ```
 
 It is possible to plot only the main section arguments instead of the single gene set names.
 
 ```{r, message=FALSE}
-# mitoTreeHeatmap(
-#     data = res_ssGSEA_subtype, database = "MitoCarta",
-#     labelNames = "sections", font.size = 3)
+mitoTreeHeatmap(
+    data = res_ssGSEA_subtype, database = "MitoCarta",
+    labelNames = "sections", font.size = 3)
 ```
 
 These analysis can be done with the mitochondrial gene sets from Reactome, GO-CC and GO-BP.
-
-# Additional functionalities
-More tutorials and examples of other plots are available on an [extended tutorial on GitHub](https://github.com/CaluraLab/mitologyTutorials). 
 
 # Bibliography
 [1] Rath S, Sharma R, Gupta R, et al. MitoCarta3.0: an updated mitochondrial proteome now with sub-organelle localization and pathway annotations. Nucleic Acids Res 2020; 49:D1541–D1547

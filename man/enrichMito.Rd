@@ -21,3 +21,7 @@ enrichment analysis for the mitochondrial gene sets after FDR control. For
 the Reactome, GO-CC and GO-BP databases it returns also the enrichment 
 results for the corresponding original pathways.
 }
+\examples{
+data(ovse)
+
+}

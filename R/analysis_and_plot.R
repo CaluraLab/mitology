@@ -85,7 +85,7 @@ getGeneSets <- function(
 #' rmatrix <- matrix(rnorm(n, 0), ncol = 5)
 #' rownames(rmatrix) <- names(MClist)
 #' colnames(rmatrix) <- paste0("Sample_", seq_len(5))
-#' 
+#' mitoTreeHeatmap(data = rmatrix, database = "MitoCarta")
 #'
 #' @export
 mitoTreeHeatmap <- function(
@@ -130,7 +130,7 @@ mitoTreeHeatmap <- function(
         g <- g + geom_cladelab(
             node = CatNodes, label = CatNames, barsize = 2, 
             offset.text = (g$data$x[1]/5)/4, 
-            offset = (g$data$x[1]/5)*(ncol(data)+1), 
+            offset = (g$data$x[1]/5)*(ncol(data)+2), 
             barcolour = plotPar$DBcol[1], angle = "auto", horizontal = TRUE) +
             theme(legend.key.size = unit(5, "mm")) }
     return(g)
@@ -233,6 +233,9 @@ mitoHeatmap <- function(
 #' 
 #' @return enrichment analysis for the mitochondrial gene sets.
 #' 
+#' @examples
+#' data(ovse)
+#' 
 #' @export
 enrichMito <- function(genes, database){
     DB_df <- getGeneSets(database = database, objectType = "dataframe")
@@ -282,6 +285,9 @@ enrichMito <- function(genes, database){
 #' 
 #' @return GSEA results for the mitochondrial gene sets.
 #' 
+#' @examples
+#' data(ovse)
+#' 
 #' @export
 gseaMito <- function(genes, database){
     DB_df <- getGeneSets(database = database, objectType = "dataframe")
@@ -329,6 +335,9 @@ gseaMito <- function(genes, database){
 #' 
 #' @importFrom ggtree ggtree geom_tippoint geom_tiplab
 #' @import ggplot2
+#' 
+#' @examples
+#' data(ovse)
 #' 
 #' @export
 mitoTreePoint <- function(
