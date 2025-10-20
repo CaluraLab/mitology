@@ -336,6 +336,8 @@ gseaMito <- function(genes, database){
 #' @importFrom ggtree ggtree geom_tippoint geom_tiplab
 #' @import ggplot2
 #' 
+#' @return A \code{\link[ggplot2]{ggplot}} object.
+#' 
 #' @examples
 #' data(ovse)
 #' 

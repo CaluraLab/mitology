@@ -28,6 +28,9 @@ Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".}
 \item{color}{variable used to color enriched terms, e.g. 'pvalue', 
 'p.adjust' or 'NES'.}
 }
+\value{
+A \code{\link[ggplot2]{ggplot}} object.
+}
 \description{
 A circular dotplot of the mitochondrial enrichment results.
 }
