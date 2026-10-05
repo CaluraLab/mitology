@@ -8,6 +8,7 @@ author:
 package: mitology
 abstract: >
   mitology allows to explore the mitochondrial activity through transcriptomic profiles. It is based on a collection of genes whose proteins localize in to the mitochondria, derived from specialized databases: MitoCarta3.0 [1], IMPI [2], MSeqDR [3], and Gene Ontology [4] (genes annotated with terms related to 'mitochondri-' in their description). Then, mitology provides ready-to-use implementations of MitoCarta3.0 pathways and also a reorganization of the pathways related to mitochondria activity from Reactome [5] and Gene Ontology. These mitochondria-focused pathways can be used to conduct mitochondrial-oriented pathway analyses, enabling single-sample assessments.
+  This vignette walks through the full process from raw gene lists to interpretable mitochondrial pathway results.
 output:
   BiocStyle::html_document:
       toc: true
@@ -41,6 +42,10 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("mitology")
+```
+Also install the other packages used in this vignette, if you do not have them already:
+```{r eval=FALSE}
+BiocManager::install(c("org.Hs.eg.db", "AnnotationDbi", "GSVA"))
 ```
 
 # Mitochondrial Genes
@@ -89,7 +94,6 @@ knitr::include_graphics("figures/Reactome_gene_sets.png")
 
 Once we obtained the final terms and pathways respectively from GO and Reactome, we extracted the mitochondrial gene sets by keeping only the genes included in the mitochondrial list. The same names of the original terms/pathways were kept for the gene sets included in mitology. The final gene sets and the corresponding tree-structures of the four databases were kept and included in the mitology package.
 
-# How to use mitology
 ## Access mitochondrial gene sets
 The `getGeneSets` function allows to get the mitochondrial gene sets. It returns them for one of the four possible databases (MitoCarta, Reactome, GO-CC and GO-BP) by the `database` argument. The `nametype` argument says the type of gene name ID, either one of SYMBOL, ENTREZID or ENSEMBL. The `objectType` argument can be set to return the gene sets in form of a list or a data frame.
 
@@ -101,15 +105,63 @@ MC_list <- getGeneSets(
     database = "MitoCarta", nametype = "SYMBOL", objectType = "list")
 ```
 
+# How to use mitology
+## Questions you need to answer first
+
+Before starting, answer these questions about your data.
+
+**Question 1 — What kind of gene list do you have?**
+
+| Your situation | What you need | mitology function |
+|---|---|---|
+| A list of genes that are significantly different between two conditions | **A vector of gene IDs** | `enrichMito()` (over-representation analysis, ORA) |
+| A ranked list covering all tested genes, e.g. ordered by fold-change or a test statistic | **A named, sorted numeric vector** | `gseaMito()` (gene set enrichment analysis, GSEA) |
+| Expression data for many samples and you want one mitochondrial-activity score per sample (e.g., to compare groups, cluster samples, or draw a heatmap) | **An expression matrix** | `getGeneSets()` + `GSVA::gsva()` (e.g. ssGSEA or GSVA) |
+
+**Question 2 — Which database do you want to use?**
+
+`mitology` offers four options. If you are unsure, start with `"MitoCarta"` — it is the best default for a first analysis.
+
+| Database | Best used when |
+|---|---|
+| `"MitoCarta"` | You want the most experimentally validated set of mitochondrial pathways. |
+| `"Reactome"` | You want broader biological context (mitochondria-related signaling, disease pathways, metabolism) beyond the curated MitoCarta pathways. |
+| `"GO-BP"` | You are interested in mitochondria-related biological processes (e.g. specific metabolic or signaling activities). |
+| `"GO-CC"` | You are interested in mitochondria-related sub-structures and localization (e.g. specific complexes or membrane compartments). |
+
+## Get your gene IDs into ENSEMBL format
+
+**Why this step matters:** `mitology`'s gene sets are indexed by ENSEMBL gene ID. If your data uses gene symbols (e.g. `"TP53"`, `"SOD2"`) or another ID type, you must convert them first, or `mitology` will not recognize your genes and will report zero results.
+
+If your genes are already ENSEMBL IDs (e.g. `"ENSG00000141510"`), skip this step.
+
+Otherwise, convert them like this:
+
+```{r, message=FALSE}
+library(org.Hs.eg.db)
+library(AnnotationDbi)
+
+# Replace this with your own gene symbols
+my_gene_symbols <- c("SOD2", "TP53", "PPARGC1A", "TFAM")
+
+my_gene_ensembl <- mapIds(
+    org.Hs.eg.db,
+    keys = my_gene_symbols,
+    column = "ENSEMBL",
+    keytype = "SYMBOL",
+    multiVals = "first"
+)
+
+my_gene_ensembl <- my_gene_ensembl[!is.na(my_gene_ensembl)]
+my_gene_ensembl
+```
+
 ## Enrichment analyses
-In the following section, we use an example bulk expression dataset of ovarian cancer to show how to use `mitology` to perform an analysis of the mitochondrial activity.
+In the following section, we use an example dataset included in `mitology` (`ovse`, bulk gene expression from 40 ovarian cancer samples) to show how to perform an analysis of the mitochondrial activity.
 
 ```{r, message=FALSE}
 # loading packages
 library(SummarizedExperiment)
-library(AnnotationDbi)
-library(org.Hs.eg.db)
-library(GSVA)
 library(Biobase)
 ```
 
@@ -120,62 +172,103 @@ ovse
 ```
 
 ### Enrichment analyses of the mitochondrial gene sets
-We can perform an over representation analysis with `enrichMito`.
+We can perform an over representation analysis (ORA) with `enrichMito()`.
 
 ```{r, warning=FALSE}
+# --- Using the example data: genes significant between two OV subtypes ---
 genes <- rownames(ovse)[elementMetadata(ovse)$PROvsIMR_FDR < 0.01]
 genes <- mapIds(
     org.Hs.eg.db, keys = genes, column = "ENSEMBL",
     keytype = "SYMBOL", multiVals = "first")
+genes <- genes[!is.na(genes)]
+
+# --- Replace the vector with your list of genes ---
+# genes <- my_gene_ensembl
 
 enrichresMC <- enrichMito(genes = genes, database = "MitoCarta")
 enrichresRT <- enrichMito(genes = genes, database = "Reactome")
+head(as.data.frame(enrichresMC))
 ```
 
-We can also compute the gene set enrichment analysis with `gseaMito`.
+Each row is a mitochondrial gene set. The columns you will look at most are pvalue/p.adjust (statistical significance — lower is more significant) and Count (how many of your genes fall in that gene set).
+
+
+### Gene set enrichment analysis (GSEA)
+With the full ranked gene list we can also compute the GSEA with `gseaMito()`.
 ```{r, warning=FALSE}
+# --- Using the example data: all genes ranked by fold-change ---
 geneslFC <- elementMetadata(ovse)$PROvsIMR_logFC
 names(geneslFC) <- rownames(ovse)
 names(geneslFC) <- mapIds(
     org.Hs.eg.db, keys = names(geneslFC), column = "ENSEMBL",
     keytype = "SYMBOL", multiVals = "first")
-geneslFC <- sort(geneslFC, decreasing = TRUE)
 geneslFC <- geneslFC[!is.na(names(geneslFC))]
+geneslFC <- sort(geneslFC, decreasing = TRUE)
+
+# --- Replace the block above with your own named, sorted numeric vector: ---
+# names(geneslFC) must be ENSEMBL IDs, values must be your ranking statistic
+# (e.g. log fold-change or a t-statistic), sorted from highest to lowest.
 
 gsearesMC <- gseaMito(genes = geneslFC, database = "MitoCarta")
 gsearesRT <- gseaMito(genes = geneslFC, database = "Reactome")
+
+head(as.data.frame(gsearesMC))
 ```
 
-Or also a single sample GSEA (ssGSEA) with `GSVA`.
+`NES` (normalized enrichment score) tells you the direction and strength of the
+signal: positive means the gene set is shifted toward the top of your ranked
+list, negative means it is shifted toward the bottom.
+
+### Per-sample score on many samples
+
+You may want to compute single-sample GSEA (ssGSEA) with `GSVA` package.
 
 ```{r}
+library(GSVA)
+MC_list <- getGeneSets(database = "MitoCarta", nametype = "SYMBOL", objectType = "list")
+
+# --- Replace `ovse` below with your own expression matrix or
+#     SummarizedExperiment object ---
 gsvaPar <- ssgseaParam(exprData = ovse, geneSets = MC_list)
 res_ssGSEA <- gsva(gsvaPar)
 ```
 
-## Visualization
-The results obtained with the over representation analysis can be visualized with a dot plot over the database tree hierarchy.
+**Important:** `gsva()` returns a `SummarizedExperiment`-like object, not a plain
+matrix — it packages the scores together with sample/gene set metadata. The visualization functions (`mitoHeatmap()`, `mitoTreeHeatmap()`) expect a plain matrix, so extract it with `assay()` before moving on:
+
+```{r}
+res_ssGSEA_matrix <- assay(res_ssGSEA)
+```
+
+`res_ssGSEA_matrix` now contains one mitochondrial-activity score per gene set
+(rows) per sample (columns) — this is the input you need for the heatmaps in the visualization step.
+
+## Visualize the results
+The results obtained with the ORA and GSEA can be visualized with a dot plot over the database tree hierarchy.
 
 ```{r}
 mitoTreePoint(data = enrichresMC, database = "MitoCarta", pvalCutoff = .9, color = "pvalue")
-mitoTreePoint(data = enrichresRT, database = "Reactome", pvalCutoff = .4, color = "pvalue")
+mitoTreePoint(data = enrichresRT, database = "Reactome", pvalCutoff = .6, color = "pvalue")
 ```
+
+Each dot is a mitochondrial gene set; dot size and color encode significance (see the `color` argument to switch between `"pvalue"`, `"p.adjust"`, or `"NES"` for GSEA results). Lower `pvalCutoff` values show fewer, more stringent results.
 
 Instead, when we obtain a matrix of scores for each sample in each gene set we can visualize it in an heatmap.
 
-Since we obtained a single score for each cell and it would be difficult to visualize it, we can summarize the information of samples by taking the mean value for each OV subtype.
+Since we obtained a single score for each sample, it would be difficult to visualize all of them. If your samples belong to a few known groups/conditions (as in our example, where 40 samples belong to 4 ovarian cancer subtypes), average the scores within each group before plotting:
 
 ```{r}
 res_ssGSEA_subtype <- do.call(
     cbind, lapply(unique(ovse$OV_subtype), function(x){
-        rowMeans(assay(res_ssGSEA)[,ovse$OV_subtype==x])
+        rowMeans(res_ssGSEA_matrix[, ovse$OV_subtype==x])
     }))
 colnames(res_ssGSEA_subtype) <- unique(ovse$OV_subtype)
-rownames(res_ssGSEA_subtype) <- rownames(res_ssGSEA)
+rownames(res_ssGSEA_subtype) <- rownames(res_ssGSEA_matrix)
 res_ssGSEA_subtype <- t(scale(t(res_ssGSEA_subtype)))
 ```
 
 ```{r fig.height=5.5, fig.width=4.5}
+set.seed(789)
 mitoHeatmap(data = res_ssGSEA_subtype, database = "MitoCarta")
 ```
 
@@ -188,7 +281,7 @@ We can also visualize it by plotting a circular heatmap on the gene set tree hie
 ```{r, message=FALSE}
 mitoTreeHeatmap(
     data = res_ssGSEA_subtype, database = "MitoCarta",
-    labelNames = "leaves", font.size = 1)
+    labelNames = "leaves", font.size = 2.5)
 ```
 
 It is possible to plot only the main section arguments instead of the single gene set names.
@@ -199,7 +292,28 @@ mitoTreeHeatmap(
     labelNames = "sections", font.size = 3)
 ```
 
-These analysis can be done with the mitochondrial gene sets from Reactome, GO-CC and GO-BP.
+**If you don't have groups, or want to keep per-sample resolution**, you can
+instead simply hide the sample labels rather than aggregating:
+
+```{r eval=FALSE}
+mitoHeatmap(data = res_ssGSEA_matrix, database = "MitoCarta", show_column_names = FALSE)
+```
+
+Once you have a working analysis, repeat with database = "Reactome", "GO-BP", or "GO-CC" to see whether broader biological context changes your interpretation. No other code needs to change.
+
+# Troubleshooting / FAQ
+
+**My `enrichMito`/`gseaMito` result has zero significant gene sets.**
+This is a valid result, not necessarily an error — it means your gene list does not show statistically concentrated mitochondrial signal for the chosen database. First, double-check that your gene IDs were successfully converted to ENSEMBL and that `genes` is not empty or full of `NA`. Then, try a less stringent significance threshold on your input gene list, or try a different `database` option.
+
+**How many genes do I need for a meaningful ORA analysis?**
+There is no hard minimum, but very short gene lists (under ~20-30 genes) rarely produce statistically significant results, since ORA depends on the number of overlapping genes. If your list is short, `gseaMito()`, which uses the full ranked list rather than a fixed cutoff, may be more appropriate.
+
+**Can I use mitology with non-human data?**
+No — mitology's gene sets are currently built for human data only.
+
+**Where do I get help if I'm stuck?**
+Open an issue on the mitology GitHub repository: <https://github.com/CaluraLab/mitology/issues>. Please include the exact code you ran, the error message (if any), and the output of `sessionInfo()`.
 
 # Bibliography
 [1] Rath S, Sharma R, Gupta R, et al. MitoCarta3.0: an updated mitochondrial proteome now with sub-organelle localization and pathway annotations. Nucleic Acids Res 2020; 49:D1541–D1547
