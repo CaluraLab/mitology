@@ -208,13 +208,11 @@ geneslFC <- sort(geneslFC, decreasing = TRUE)
 # --- Replace the block above with your own named, sorted numeric vector: ---
 # names(geneslFC) must be ENSEMBL IDs, values must be your ranking statistic
 # (e.g. log fold-change or a t-statistic), sorted from highest to lowest.
-
+```
+```{r eval=FALSE}
 gsearesMC <- gseaMito(genes = geneslFC, database = "MitoCarta")
 gsearesRT <- gseaMito(genes = geneslFC, database = "Reactome")
-
-head(as.data.frame(gsearesMC))
 ```
-
 `NES` (normalized enrichment score) tells you the direction and strength of the
 signal: positive means the gene set is shifted toward the top of your ranked
 list, negative means it is shifted toward the bottom.
@@ -246,9 +244,11 @@ res_ssGSEA_matrix <- assay(res_ssGSEA)
 ## Visualize the results
 The results obtained with the ORA and GSEA can be visualized with a dot plot over the database tree hierarchy.
 
-```{r}
-mitoTreePoint(data = enrichresMC, database = "MitoCarta", pvalCutoff = .9, color = "pvalue")
-mitoTreePoint(data = enrichresRT, database = "Reactome", pvalCutoff = .6, color = "pvalue")
+```{r, message=FALSE, warning=FALSE}
+mitoTreePoint(data = enrichresMC, database = "MitoCarta", 
+              pvalCutoff = .9, color = "pvalue")
+mitoTreePoint(data = enrichresRT, database = "Reactome", 
+              pvalCutoff = .6, color = "pvalue")
 ```
 
 Each dot is a mitochondrial gene set; dot size and color encode significance (see the `color` argument to switch between `"pvalue"`, `"p.adjust"`, or `"NES"` for GSEA results). Lower `pvalCutoff` values show fewer, more stringent results.
@@ -278,15 +278,15 @@ mitoHeatmap(data = res_ssGSEA_subtype, database = "MitoCarta", splitSections = T
 
 We can also visualize it by plotting a circular heatmap on the gene set tree hierarchy.
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 mitoTreeHeatmap(
     data = res_ssGSEA_subtype, database = "MitoCarta",
-    labelNames = "leaves", font.size = 2.5)
+    labelNames = "leaves", font.size = 2)
 ```
 
 It is possible to plot only the main section arguments instead of the single gene set names.
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 mitoTreeHeatmap(
     data = res_ssGSEA_subtype, database = "MitoCarta",
     labelNames = "sections", font.size = 3)
@@ -296,7 +296,7 @@ mitoTreeHeatmap(
 instead simply hide the sample labels rather than aggregating:
 
 ```{r eval=FALSE}
-mitoHeatmap(data = res_ssGSEA_matrix, database = "MitoCarta", show_column_names = FALSE)
+mitoHeatmap(data = res_ssGSEA_matrix, database = "MitoCarta")
 ```
 
 Once you have a working analysis, repeat with database = "Reactome", "GO-BP", or "GO-CC" to see whether broader biological context changes your interpretation. No other code needs to change.

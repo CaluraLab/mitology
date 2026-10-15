@@ -1,7 +1,7 @@
 Package: mitology
 Type: Package
 Title: Study of mitochondrial activity from RNA-seq data
-Version: 1.5.1
+Version: 1.5.2
 Authors@R: c(person("Stefania", "Pirrotta", role = c("cre", "aut"),
                     email = "stefania.pirrotta@unipd.it",
                     comment = c(ORCID = "0009-0004-0030-217X")),
@@ -20,7 +20,6 @@ biocViews: GeneExpression, RNASeq, Visualization, SingleCell, Spatial,
 Imports: AnnotationDbi, ape, circlize, clusterProfiler, ComplexHeatmap, 
         ggplot2, ggtree, magrittr, org.Hs.eg.db, ReactomePA, scales
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 Depends: R (>= 4.5.0)
 LazyData: false
 Suggests: Biobase, BiocStyle, GSVA, methods, rmarkdown, 
@@ -28,3 +27,4 @@ Suggests: Biobase, BiocStyle, GSVA, methods, rmarkdown,
 VignetteBuilder: knitr
 BugReports: https://github.com/CaluraLab/mitology/issues
 URL: https://github.com/CaluraLab/mitology
+Config/roxygen2/version: 8.1.1

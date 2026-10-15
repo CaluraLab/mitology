@@ -277,6 +277,8 @@ enrichMito <- function(genes, database){
 #' @param genes order ranked gene vector named by ENSEMBL id.
 #' @param database character string saying the database to use for the analysis.
 #' Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".
+#' @param ... other arguments passed on to the \code{\link[clusterProfiler]{GSEA}}
+#' function.
 #'
 #' @importFrom clusterProfiler GSEA gseGO
 #' @importFrom AnnotationDbi mapIds
@@ -289,9 +291,12 @@ enrichMito <- function(genes, database){
 #' data(ovse)
 #' 
 #' @export
-gseaMito <- function(genes, database){
+gseaMito <- function(genes, database, ...){
     DB_df <- getGeneSets(database = database, objectType = "dataframe")
-    orM <- GSEA(geneList = genes, TERM2GENE = DB_df)
+    
+    dots <- list(...)
+    args <- .matchArguments(dots, list(geneList = genes, TERM2GENE = DB_df))
+    orM <- do.call(GSEA, args)
     orM <- orM@result
     
     if(database == "MitoCarta"){ return(list(MitoCarta = orM)) }
@@ -302,14 +307,18 @@ gseaMito <- function(genes, database){
             column = "ENTREZID", keytype = "ENSEMBL")
         genes <- genes[!is.na(names(genes))]
         genes <- genes[!duplicated(names(genes))]
-        orO <- gsePathway(geneList = genes, maxGSSize = 1000)
+        dots <- list(...)
+        args <- .matchArguments(dots, list(geneList = genes, maxGSSize = 1000))
+        orO <- do.call(gsePathway, args)
         orO <- orO@result
         orO$Description <- .mitologyName(names = orO$Description, database)
     } else {
-        orO <- gseGO(
+        dots <- list(...)
+        args <- .matchArguments(dots, list(
             geneList = genes, keyType = "ENSEMBL", OrgDb = "org.Hs.eg.db", 
             ont = substring(database, 4, 5), pAdjustMethod = "BH", 
-            pvalueCutoff = 1.1, minGSSize = 10, maxGSSize = 100000)
+            pvalueCutoff = 1.1, minGSSize = 10, maxGSSize = 100000))
+        orO <- do.call(gseGO, args)
         orO <- orO@result
         orO$Description <- .mitologyName(names = orO$Description, "GO")
     }

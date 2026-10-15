@@ -4,13 +4,16 @@
 \alias{gseaMito}
 \title{Mitochondrial GSEA of a gene list.}
 \usage{
-gseaMito(genes, database)
+gseaMito(genes, database, ...)
 }
 \arguments{
 \item{genes}{order ranked gene vector named by ENSEMBL id.}
 
 \item{database}{character string saying the database to use for the analysis.
 Either one of "MitoCarta", "Reactome", "GO-CC" and "GO-BP".}
+
+\item{...}{other arguments passed on to the \code{\link[clusterProfiler]{GSEA}}
+function.}
 }
 \value{
 GSEA results for the mitochondrial gene sets.
