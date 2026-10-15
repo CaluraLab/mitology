@@ -21,6 +21,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Stefania Pirrotta \email{stefania.pirrotta@unipd.it} (\href{https://orcid.org/0009-0004-0030-217X}{ORCID})
   \item Enrica Calura \email{enrica.calura@unipd.it} (\href{https://orcid.org/0000-0001-8463-2432}{ORCID}) [funder]
 }
 
