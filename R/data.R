@@ -22,11 +22,26 @@
 "ovse"
 
 
-#' Mitochondrial genes
+#' Mitochondrial-related genes
 #'
-#' Here are listed all the final mitochondrial genes in ENSEMBL id, the 
-#' corresponding SYMBOL id and the database from where they were collected.
-#'
+#' Here are listed all the mitochondrial-related genes collected in mitology.
+#' Columns are:
+#' \itemize{
+#'  \item the ENSEMBL id
+#'  \item the SYMBOL id
+#'  \item the databases from where the gene was collected (IMPI, MitoCarta3.0, 
+#' MSeqDR and/or GO-CC)
+#'  \item the localization class:
+#'  \itemize{
+#' \item “Ancillary” for genes encoding ancillary mitochondrial proteins with 
+#' no evidence of mitochondrial localization but reported to affect 
+#' mitochondrial function or morphology;
+#' \item “Mitochondrial only” for genes encoding proteins with evidence of 
+#' mitochondrial localization and not in additional cellular compartments;
+#' \item “Multi-localized” for genes encoding proteins with evidence of 
+#' mitochondrial localization and in additional cellular compartments.
+#' }}
+#' 
 #' @docType data
 #' 
 #' @usage data(MitoGenesDB)
